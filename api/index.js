@@ -6,9 +6,11 @@ const getUserInfo = async login => {
       {
         user(login: ${login}) {
           login
+          id
           pinnedItems(first: 6) {
             nodes {
               ... on Repository {
+                id
                 name
                 homepageUrl
                 primaryLanguage {

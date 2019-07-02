@@ -11,15 +11,15 @@ const {
 })
 
 const USER_TYPE = `User`
-const PINNED_REPOSITORY_TYPE = `PinnedRepository`
+const REPOSITORY_TYPE = `Repository`
 
 const UserNode = createNodeFactory(USER_TYPE, node => {
   if (node.pinnedItems) {
     const { nodes } = node.pinnedItems
 
     // Set children
-    node.children = nodes.map(variant =>
-      generateNodeId(PINNED_REPOSITORY_TYPE, variant.id)
+    node.children = nodes.map(repo =>
+      generateNodeId(REPOSITORY_TYPE, repo.id)
     )
 
     // Remove unnecessary fields
@@ -29,20 +29,35 @@ const UserNode = createNodeFactory(USER_TYPE, node => {
   return node
 })
 
+const RepoNode = createNodeFactory(REPOSITORY_TYPE)
+
 exports.onCreateNode = async ({ node, actions }) => {
   if (node.internal.type === "ContentfulPerson") {
     // fetch user repos from Github
-    const user = await getUserInfo(node.github)
+    const json = await getUserInfo(node.github)
 
-    const userNode = UserNode({
-      ...user,
-      id: generateNodeId(user.login),
-      parent: node.id,
-    })
-    console.log("****user node****")
-    console.log(userNode)
-    actions.createNode(userNode)
-    console.log("****parent node****")
-    console.log(node)
+    if (json.data && json.data.user) {
+      const { createNode } = actions
+      const { user } = json.data
+      const userNode = UserNode(user, {
+        id: generateNodeId(USER_TYPE, user.login),
+        contentfulPerson___NODE: node.id
+      })
+
+      console.log("****parent node****")
+      console.log(node)
+      createNode(userNode)
+
+      node.githubUser___NODE = userNode.id
+      console.log("****user node****")
+      console.log(userNode)
+
+      user.pinnedItems.nodes.forEach(repo => {
+        const repoNode = RepoNode(repo, {
+          parent: userNode.id,
+        })
+        createNode(repoNode)
+      })
+    }
   }
 }
