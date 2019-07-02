@@ -20,6 +20,7 @@ const getUserInfo = async login => {
                 url
                 readme: object(expression: "master:README.md") {
                   ... on Blob {
+                    id
                     text
                   }
                 }

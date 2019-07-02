@@ -50,6 +50,7 @@ module.exports = {
         },
       },
     },
+    `gatsby-transformer-remark`,
     // TODO: check these plugins out, they come with the default starter...
     `gatsby-plugin-react-helmet`,
     {
