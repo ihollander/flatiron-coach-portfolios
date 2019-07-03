@@ -5,7 +5,6 @@ const { GithubUserNode, GithubRepoNode, GithubReadmeNode } = require("./nodes")
 exports.onCreateNode = async ({ node, actions }) => {
   // we want to add additional info the ContentfulPerson nodes by making a fetch to Github
   if (node.internal.type === "ContentfulPerson") {
-    console.log('**** create person node ****')
     // fetch user data and repos from Github
     const json = await getUserInfo(node.github)
 
@@ -16,7 +15,7 @@ exports.onCreateNode = async ({ node, actions }) => {
       // create a node for each user from github
       // create relationship from contentfulPerson -> githubUser
       const userNode = GithubUserNode(user, {
-        contentfulPerson___NODE: node.id
+        contentfulPerson___NODE: node.id,
       })
       createNode(userNode)
 
@@ -25,7 +24,6 @@ exports.onCreateNode = async ({ node, actions }) => {
 
       // create nodes for each pinned item repository
       user.pinnedItems.nodes.forEach(repo => {
-
         // create a node for each repo for a user
         const repoNode = GithubRepoNode(repo, {
           // does it need a parent relationship?
@@ -38,12 +36,12 @@ exports.onCreateNode = async ({ node, actions }) => {
           const readmeNode = GithubReadmeNode(repo.readme, {
             // create relationship from githubReadme -> githubRepo
             // does it need a parent relationship?
-            githubRepository___NODE: repoNode.id
+            githubRepository___NODE: repoNode.id,
           })
           createNode(readmeNode)
 
           // set internals for gatsby-transformer-remark
-          readmeNode.internal.mediaType = 'text/markdown'
+          readmeNode.internal.mediaType = "text/markdown"
           readmeNode.internal.content = repo.readme.text
 
           // create relationship from githubRepo -> githubReadme
@@ -56,43 +54,32 @@ exports.onCreateNode = async ({ node, actions }) => {
 }
 
 // to create invidual pages from source
-exports.createPages = async function ({ actions: { createPage }, graphql }) {
-  const { data } = await graphql(`
+exports.createPages = async function({ actions, graphql, reporter }) {
+  const result = await graphql(`
     query AllUserInfo {
       allContentfulPerson {
-        nodes {
-          name
-          github
-          email
-          company
-          githubUser {
-            id
-            childrenGithubRepository {
-              id
-              shortDescriptionHTML
-              url
-              name
-              homepageUrl
-              githubReadme {
-                childMarkdownRemark {
-                  html
-                }
-              }
-            }
+        edges {
+          node {
+            github
           }
         }
       }
     }
   `)
 
-  await Promise.all(
-    data.allContentfulPerson.nodes.map(async node => {
-      console.log('**** create page ****')
-      return await createPage({
-        path: `/${node.github}`,
-        component: require.resolve(`./src/templates/user-page.js`),
-        context: { user: node },
-      })
+  if (result.error) {
+    reporter.panic("Uh oh. There was a problem loading the source nodes...")
+    return
+  }
+
+  result.data.allContentfulPerson.edges.forEach(({ node: { github } }) => {
+    actions.createPage({
+      path: `/${github}/`,
+      component: require.resolve(`./src/templates/user-page.js`),
+      context: { github }, // will be available to graphQL query as a variable
     })
-  )
+
+    // TODO: we could also create individual pages for each project if that feature sounds cool
+    // we'd just have to extend the graphql query above to get repos
+  })
 }
