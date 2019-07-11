@@ -1,6 +1,15 @@
 const { getUserInfo } = require("./api")
 const { GithubUserNode, GithubRepoNode, GithubReadmeNode } = require("./nodes")
 
+// utility, move to separate file
+const crypto = require("crypto")
+
+const createContentDigest = nodeContent =>
+  crypto
+    .createHash(`md5`)
+    .update(nodeContent)
+    .digest(`hex`)
+
 // will run during build when Gatsby is creating the source nodes
 exports.onCreateNode = async ({ node, actions }) => {
   // we want to add additional info the ContentfulPerson nodes by making a fetch to Github
@@ -13,8 +22,8 @@ exports.onCreateNode = async ({ node, actions }) => {
       const { user } = json.data
 
       // create a node for each user from github
-      // create relationship from contentfulPerson -> githubUser
       const userNode = GithubUserNode(user, {
+        // create relationship from contentfulPerson -> githubUser
         contentfulPerson___NODE: node.id,
       })
       createNode(userNode)
@@ -43,6 +52,9 @@ exports.onCreateNode = async ({ node, actions }) => {
           // set internals for gatsby-transformer-remark
           readmeNode.internal.mediaType = "text/markdown"
           readmeNode.internal.content = repo.readme.text
+          readmeNode.internal.contentDigest = createContentDigest(
+            repo.readme.text
+          )
 
           // create relationship from githubRepo -> githubReadme
           // does it need a parent relationship?
