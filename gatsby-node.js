@@ -1,63 +1,78 @@
 const { getUserInfo } = require("./api")
-const { GithubUserNode, GithubRepoNode, GithubReadmeNode } = require("./nodes")
+const { createDigest } = require("./build-helpers")
 
-// utility, move to separate file
-const crypto = require("crypto")
-
-const createContentDigest = nodeContent =>
-  crypto
-    .createHash(`md5`)
-    .update(nodeContent)
-    .digest(`hex`)
-
-// will run during build when Gatsby is creating the source nodes
+/* 
+  onCreateNode will run during build when Gatsby is creating the source nodes
+  We can programatically add to the node tree at this point 
+  (https://www.gatsbyjs.org/docs/gatsby-lifecycle-apis/)
+  We want to get additional info for each person from the Github API based on 
+  their github username, which is stored in Contentful for each person. This 
+  will allow us to grab pinned repositories to populate the portfolio data.
+*/
 exports.onCreateNode = async ({ node, actions }) => {
-  // we want to add additional info the ContentfulPerson nodes by making a fetch to Github
   if (node.internal.type === "ContentfulPerson") {
     // fetch user data and repos from Github
     const json = await getUserInfo(node.github)
 
     if (json.data && json.data.user) {
       const { createNode } = actions
+
+      /* 
+        Creates a githubUser node under contentfulPerson 
+        TODO: extract node creation logic or use gatsby-node-helpers package
+      */
       const { user } = json.data
+      const userContent = JSON.stringify(user)
+      const userNode = {
+        ...user,
+        id: `GithubUser-${user.id}`,
+        parent: node.id,
+        internal: {
+          type: `GithubUser`,
+          content: userContent,
+          contentDigest: createDigest(userContent),
+        },
+      }
+      // delete pinned repos, will handle with separate node creation
+      delete userNode.pinnedItems
 
-      // create a node for each user from github
-      const userNode = GithubUserNode(user, {
-        // create relationship from contentfulPerson -> githubUser
-        contentfulPerson___NODE: node.id,
-      })
       createNode(userNode)
-
-      // create relationship from githubUser -> contentfulPerson
       node.githubUser___NODE = userNode.id
 
-      // create nodes for each pinned item repository
+      /* 
+        Create child nodes for each githubRepository under githubUser
+      */
       user.pinnedItems.nodes.forEach(repo => {
-        // create a node for each repo for a user
-        const repoNode = GithubRepoNode(repo, {
-          // does it need a parent relationship?
+        const repoContent = JSON.stringify(repo)
+        const repoNode = {
+          ...repo,
+          id: `GithubRepository-${repo.id}`,
           parent: userNode.id,
-        })
+          internal: {
+            type: `GithubRepository`,
+            content: repoContent,
+            contentDigest: createDigest(repoContent),
+          },
+        }
         createNode(repoNode)
+        userNode.children.push(repoNode.id)
 
         if (repo.readme && repo.readme.text) {
-          // create a node the project readme
-          const readmeNode = GithubReadmeNode(repo.readme, {
-            // create relationship from githubReadme -> githubRepo
-            // does it need a parent relationship?
-            githubRepository___NODE: repoNode.id,
-          })
+          /* 
+            Create a githubReadme node under githubRepository
+            Set mediaType to text/markdown so gatsby-transformer-remark will parse it
+          */
+          const readmeNode = {
+            id: `GithubReadme-${repo.id}`,
+            parent: repoNode.id,
+            internal: {
+              type: `GithubReadme`,
+              mediaType: `text/markdown`,
+              content: repo.readme.text,
+              contentDigest: createDigest(repo.readme.text),
+            },
+          }
           createNode(readmeNode)
-
-          // set internals for gatsby-transformer-remark
-          readmeNode.internal.mediaType = "text/markdown"
-          readmeNode.internal.content = repo.readme.text
-          readmeNode.internal.contentDigest = createContentDigest(
-            repo.readme.text
-          )
-
-          // create relationship from githubRepo -> githubReadme
-          // does it need a parent relationship?
           repoNode.githubReadme___NODE = readmeNode.id
         }
       })
@@ -65,8 +80,17 @@ exports.onCreateNode = async ({ node, actions }) => {
   }
 }
 
-// to create invidual pages from source
+/*
+  createPages will run during build and can be used to programatically create pages
+  based on the data in our sources
+  https://www.gatsbyjs.org/docs/creating-and-modifying-pages/
+*/
 exports.createPages = async function({ actions, graphql, reporter }) {
+  /* 
+    This will query the data pulled in from any Gatsby source plugins as well as 
+    additional data pulled in during the onCreateNode lifecycle, so we have access
+    to all the data from Contentful as well as Github API at this point
+  */
   const result = await graphql(`
     query AllUserInfo {
       allContentfulPerson {
@@ -84,11 +108,12 @@ exports.createPages = async function({ actions, graphql, reporter }) {
     return
   }
 
+  // programatically create pages for each person returned by Contentful
   result.data.allContentfulPerson.edges.forEach(({ node: { github } }) => {
     actions.createPage({
-      path: `/${github}/`,
-      component: require.resolve(`./src/templates/user-page.js`),
-      context: { github }, // will be available to graphQL query as a variable
+      path: `/${github}/`, // the url path for this page
+      component: require.resolve(`./src/templates/user-page.js`), // which component template to use
+      context: { github }, // This will be available as a variable to graphQL query in user-page.js
     })
 
     // TODO: we could also create individual pages for each project if that feature sounds cool
