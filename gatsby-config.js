@@ -7,6 +7,8 @@ module.exports = {
     title: `Gatsby Default Starter`,
     description: `Kick off your next, great Gatsby project with this default starter. This barebones starter ships with the main Gatsby configuration files you might need.`,
     author: `@gatsbyjs`,
+    url: process.env.SITE_URL, // No trailing slash allowed!
+    image: "/images/gatsby-icon.png"
   },
   plugins: [
     {
@@ -17,6 +19,7 @@ module.exports = {
       },
     },
     `gatsby-transformer-remark`,
+    `gatsby-plugin-sass`,
     // TODO: check these plugins out, they come with the default starter...
     `gatsby-plugin-react-helmet`, //
     {

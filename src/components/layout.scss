@@ -1,0 +1,38 @@
+@charset "utf-8";
+
+// Import a Google Font
+@import url('https://fonts.googleapis.com/css?family=Nunito:400,700');
+
+// Set your brand colors
+$orange: #FF6A06;
+$blue: #00B3E6;
+$brown: #757763;
+$beige-light: #d0d1cd;
+$cosmic-latte: #FFF8E7;
+
+// Update Bulma's global variables
+$family-sans-serif: 'Nunito', sans-serif;
+$grey-light: $beige-light;
+$primary: $blue;
+$link: $orange;
+$widescreen-enabled: false;
+$fullhd-enabled: false;
+
+// Update some of Bulma's component variables
+$body-background-color: $cosmic-latte;
+$control-border-width: 2px;
+$input-border-color: transparent;
+$input-shadow: none;
+
+// Import only what you need from Bulma
+// @import '~bulma/sass/utilities/_all.sass';
+// @import '~bulma/sass/base/_all.sass';
+// @import '~bulma/sass/elements/button.sass';
+// @import '~bulma/sass/elements/container.sass';
+// @import '~bulma/sass/elements/form.sass';
+// @import '~bulma/sass/elements/title.sass';
+// @import '~bulma/sass/components/navbar.sass';
+// @import '~bulma/sass/layout/hero.sass';
+// @import '~bulma/sass/layout/section.sass';
+
+@import '~bulma/bulma.sass'
