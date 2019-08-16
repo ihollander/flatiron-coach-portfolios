@@ -17,6 +17,7 @@ module.exports = {
       },
     },
     `gatsby-transformer-remark`,
+    `gatsby-plugin-styled-components`,
     // TODO: check these plugins out, they come with the default starter...
     `gatsby-plugin-react-helmet`, //
     {
