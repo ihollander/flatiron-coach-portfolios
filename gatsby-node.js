@@ -48,6 +48,7 @@ exports.onCreateNode = async ({ node, actions }) => {
           ...repo,
           id: `GithubRepository-${repo.id}`,
           parent: userNode.id,
+          githubUser: node.github,
           internal: {
             type: `GithubRepository`,
             content: repoContent,
@@ -85,7 +86,7 @@ exports.onCreateNode = async ({ node, actions }) => {
   based on the data in our sources
   https://www.gatsbyjs.org/docs/creating-and-modifying-pages/
 */
-exports.createPages = async function({ actions, graphql, reporter }) {
+exports.createPages = async function ({ actions, graphql, reporter }) {
   /* 
     This will query the data pulled in from any Gatsby source plugins as well as 
     additional data pulled in during the onCreateNode lifecycle, so we have access
@@ -97,6 +98,11 @@ exports.createPages = async function({ actions, graphql, reporter }) {
         edges {
           node {
             github
+            githubUser {
+              childrenGithubRepository {
+                name
+              }
+            }
           }
         }
       }
@@ -109,14 +115,21 @@ exports.createPages = async function({ actions, graphql, reporter }) {
   }
 
   // programatically create pages for each person returned by Contentful
-  result.data.allContentfulPerson.edges.forEach(({ node: { github } }) => {
+  result.data.allContentfulPerson.edges.forEach(({ node }) => {
     actions.createPage({
-      path: `/${github}/`, // the url path for this page
+      path: `/${node.github}/`, // the url path for this page
       component: require.resolve(`./src/templates/user-page.js`), // which component template to use
-      context: { github }, // This will be available as a variable to graphQL query in user-page.js
+      context: { github: node.github }, // This will be available as a variable to graphQL query in user-page.js
     })
 
     // TODO: we could also create individual pages for each project if that feature sounds cool
     // we'd just have to extend the graphql query above to get repos
+    node.githubUser.childrenGithubRepository.forEach(repo => {
+      actions.createPage({
+        path: `/${node.github}/${repo.name}`, // the url path for this page
+        component: require.resolve(`./src/templates/repo-page.js`), // which component template to use
+        context: { repo: repo.name, github: node.github }, // This will be available as a variable to graphQL query in user-page.js
+      })
+    })
   })
 }

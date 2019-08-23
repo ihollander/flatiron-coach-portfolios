@@ -1,13 +1,24 @@
 import React from "react"
-import { graphql } from "gatsby"
+import { graphql, Link } from "gatsby"
 import Layout from "../components/layout"
 // import Portfolio from '../components/Portfolio'
 
 export default props => {
-  console.log(props)
+  const person = props.data.contentfulPerson
   return (
     <Layout location={props.location}>
-      <div>{props.data.contentfulPerson.name}</div>
+      <h1>{person.name}</h1>
+      <h3>{person.company}</h3>
+      {person.shortBio && <p dangerouslySetInnerHTML={{ __html: person.shortBio.childMarkdownRemark.html }} />}
+      <hr />
+      <h3>Projects</h3>
+      <ul>
+        {person.githubUser.childrenGithubRepository.map(repo => (
+          <li key={repo.name}>
+            <Link to={`/${person.github}/${repo.name}`}>{repo.name}</Link>
+          </li>
+        ))}
+      </ul>
     </Layout>
   )
 }
