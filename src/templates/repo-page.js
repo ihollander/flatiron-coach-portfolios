@@ -8,7 +8,9 @@ export default props => {
   return (
     <Layout location={props.location}>
       <h1>{repo.name}</h1>
-      {repo.githubReadme && <p dangerouslySetInnerHTML={{ __html: repo.githubReadme.childMarkdownRemark.html }} />}
+      {repo.githubReadme &&
+        <p dangerouslySetInnerHTML={{ __html: repo.githubReadme.childMarkdownRemark.html }} />
+      }
     </Layout>
   )
 }

@@ -1,30 +1,27 @@
 import React from "react"
-import { css } from '@emotion/core'
-import { Link, graphql } from "gatsby"
-import Img from "gatsby-image"
+import { graphql } from "gatsby"
 
+import RosterGrid from "../components/roster/roster-grid"
+import RosterItem from "../components/roster/roster-item"
 import Layout from "../components/layout"
-import SEO from "../components/seo"
 
-const IndexPage = props => {
-  const { edges } = props.data.allContentfulPerson;
-  console.log(edges)
+const IndexPage = ({
+  data: {
+    allContentfulPerson: { edges },
+  },
+}) => {
   return (
     <Layout>
-      <SEO title="Home" />
-      <h1>Flatiron Alumni Portfolios</h1>
-      <div css={css`
-        display: flex;
-      `}>
+      <RosterGrid>
         {edges.map(({ node }) => (
-          <div key={node.github} css={css`
-
-          `}>
-            {node.image && <Img fixed={node.image.fixed} alt={node.name} />}
-            <Link to={`/${node.github}`}>{node.name}</Link>
-          </div>
+          <RosterItem
+            key={node.github}
+            github={node.github}
+            image={node.image}
+            name={node.name}
+          />
         ))}
-      </div>
+      </RosterGrid>
     </Layout>
   )
 }
@@ -42,14 +39,12 @@ export const query = graphql`
           facebook
           name
           image {
-            fixed(width: 400, height: 400) {
-              width
-              height
-              src
-              srcSet
+            fluid(maxWidth: 400) {
+              ...GatsbyContentfulFluid
             }
           }
         }
       }
     }
-  }`
+  }
+`

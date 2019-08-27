@@ -1,0 +1,27 @@
+@import url('https://fonts.googleapis.com/css?family=Merriweather|Archivo Narrow&display=swap');
+
+/* reset */
+*, *::before, *::after { 
+  box-sizing:border-box;
+}
+ul, ol, dd {
+  margin:0; 
+  padding:0; 
+  list-style:none;
+}
+a {
+  text-decoration:none; 
+  color:inherit; 
+  cursor:pointer;
+}
+
+/* page styez */
+body {
+  margin: 0;
+  background-color: #FFF8E7;
+  font-family: 'Merriweather', sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Archivo Narrow', sans-serif;
+}

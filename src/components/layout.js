@@ -1,10 +1,11 @@
-import { css } from '@emotion/core'
 import React from "react"
 import PropTypes from "prop-types"
 import { useStaticQuery, graphql } from "gatsby"
 
+import "normalize.css"
+import "../css/layout.css"
+
 import Header from "./header"
-import "./layout.css"
 
 const Layout = ({ children }) => {
   const data = useStaticQuery(graphql`
@@ -21,14 +22,7 @@ const Layout = ({ children }) => {
   return (
     <>
       <Header siteTitle={title} />
-      <div
-        css={css`
-          margin: 0 auto;
-          max-width: 960;
-          padding: 0px 1.0875rem 1.45rem;
-          padding-top: 0;
-        `}
-      >
+      <div>
         <main>{children}</main>
         <footer>
           © {new Date().getFullYear()}, Built with

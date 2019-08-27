@@ -1,16 +1,19 @@
 import React from "react"
 import { graphql, Link } from "gatsby"
 import Layout from "../components/layout"
-// import Portfolio from '../components/Portfolio'
+
+import UserHeading from "../components/user/user-heading"
 
 export default props => {
   const person = props.data.contentfulPerson
   return (
-    <Layout location={props.location}>
-      <h1>{person.name}</h1>
-      <h3>{person.company}</h3>
-      {person.shortBio && <p dangerouslySetInnerHTML={{ __html: person.shortBio.childMarkdownRemark.html }} />}
-      <hr />
+    <Layout>
+      <UserHeading
+        name={person.name}
+        company={person.company}
+        shortBio={person.shortBio}
+        image={person.image}
+      />
       <h3>Projects</h3>
       <ul>
         {person.githubUser.childrenGithubRepository.map(repo => (
@@ -33,6 +36,11 @@ export const query = graphql`
       shortBio {
         childMarkdownRemark {
           html
+        }
+      }
+      image {
+        fluid(maxWidth: 400) {
+          ...GatsbyContentfulFluid
         }
       }
       githubUser {
